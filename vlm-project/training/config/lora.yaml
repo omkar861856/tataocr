@@ -1,0 +1,57 @@
+# LoRA Fine-Tuning Hyperparameters for Qwen2.5-VL-7B
+
+model:
+  base_model_name_or_path: "Qwen/Qwen2.5-VL-7B-Instruct"
+  torch_dtype: "bfloat16"
+  attn_implementation: "flash_attention_2"
+  use_qlora: true
+  bits: 4
+  double_quant: true
+  quant_type: "nf4"
+
+lora:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.05
+  bias: "none"
+  task_type: "CAUSAL_LM"
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+
+training:
+  output_dir: "./models/adapters/prescription-vlm"
+  num_train_epochs: 3
+  per_device_train_batch_size: 2
+  per_device_eval_batch_size: 2
+  gradient_accumulation_steps: 4
+  learning_rate: 2.0e-4
+  weight_decay: 0.01
+  warmup_ratio: 0.05
+  lr_scheduler_type: "cosine"
+  logging_steps: 10
+  save_strategy: "epoch"
+  evaluation_strategy: "epoch"
+  save_total_limit: 2
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  fp16: false
+  bf16: true
+  dataloader_num_workers: 4
+  gradient_checkpointing: true
+  max_grad_norm: 1.0
+  seed: 42
+
+data:
+  train_file: "./data/processed/train.jsonl"
+  validation_file: "./data/processed/validation.jsonl"
+  test_file: "./data/processed/test.jsonl"
+  max_seq_length: 2048
+  image_min_pixels: 3136 # 56 * 56
+  image_max_pixels: 12845056 # 1280 * 28 * 28

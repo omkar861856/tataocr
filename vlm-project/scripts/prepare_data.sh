@@ -8,6 +8,10 @@ echo "=========================================================="
 echo "🩺 Generating Prescription Dataset (${SAMPLES} Samples)"
 echo "=========================================================="
 
+if [ -f "./venv/bin/activate" ]; then
+    source ./venv/bin/activate
+fi
+
 python3 training/prepare_dataset.py --samples "${SAMPLES}" --data-dir "./data"
 
 echo "=========================================================="

@@ -13,6 +13,10 @@ export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
 export PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True"
 export TOKENIZERS_PARALLELISM=false
 
+if [ -f "./venv/bin/activate" ]; then
+    source ./venv/bin/activate
+fi
+
 if command -v nvidia-smi &> /dev/null; then
     echo "Active GPU:"
     nvidia-smi --query-gpu=name,memory.total,memory.free --format=csv,noheader

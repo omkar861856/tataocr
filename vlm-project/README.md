@@ -72,6 +72,11 @@ vlm-project/
 cd vlm-project
 python3 -m venv venv
 source venv/bin/activate
+
+# For NVIDIA RTX 5090 (sm_120 / CUDA 13):
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
+
+# Install remaining dependencies:
 pip install -r requirements.txt
 ```
 

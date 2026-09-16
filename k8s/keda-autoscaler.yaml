@@ -1,0 +1,27 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: vlm-worker-autoscaler
+  namespace: ocr-system
+spec:
+  scaleTargetRef:
+    name: vlm-ocr-inference-worker
+  minReplicaCount: 1
+  maxReplicaCount: 8
+  cooldownPeriod: 300
+  triggers:
+  # Trigger 1: RabbitMQ Task Queue Backlog
+  - type: rabbitmq
+    metadata:
+      queueName: pending-document-ocr-jobs
+      mode: QueueLength
+      value: "5"
+    authenticationRef:
+      name: keda-rabbitmq-auth
+  # Trigger 2: Prometheus Container GPU Duty Cycle Utilization
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-k8s.monitoring:9090
+      metricName: container_gpu_utilization
+      query: sum(container_gpu_utilization{namespace="ocr-system"}) / count(container_gpu_utilization{namespace="ocr-system"})
+      threshold: "80"

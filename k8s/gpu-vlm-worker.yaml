@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vlm-ocr-inference-worker
+  namespace: ocr-system
+  labels:
+    app: vlm-ocr-worker
+    tier: inference
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vlm-ocr-worker
+  template:
+    metadata:
+      labels:
+        app: vlm-ocr-worker
+    spec:
+      nodeSelector:
+        accelerator: nvidia-gpu
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+      containers:
+      - name: vllm-vlm-engine
+        image: registry.cloud.internal/vlm/qwen2-vl-ocr:v1.4.0-cuda12
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MODEL_NAME
+          value: "Qwen/Qwen2-VL-7B-Instruct"
+        - name: MAX_MODEL_LEN
+          value: "8192"
+        - name: GPU_MEMORY_UTILIZATION
+          value: "0.90"
+        ports:
+        - containerPort: 8000
+          name: http-api
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            memory: 32Gi
+            cpu: "6"
+          requests:
+            nvidia.com/gpu: 1
+            memory: 16Gi
+            cpu: "4"
+        volumeMounts:
+        - mountPath: /models
+          name: shared-vlm-weights
+        - mountPath: /tmp/ocr-cache
+          name: ocr-staging-cache
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
+          initialDelaySeconds: 45
+          periodSeconds: 15
+      volumes:
+      - name: shared-vlm-weights
+        persistentVolumeClaim:
+          claimName: pvc-fast-nvme-vlm-models
+      - name: ocr-staging-cache
+        emptyDir:
+          medium: Memory
+          sizeLimit: 8Gi
